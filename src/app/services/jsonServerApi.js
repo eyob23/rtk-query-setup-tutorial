@@ -1,39 +1,48 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
 export const jsonServerApi = createApi({
-  reducerPath: 'jsonServerApi',
-  baseQuery: fetchBaseQuery({ baseUrl: 'http://localhost:8000/' }),
-  tagTypes: ['Albums'],
+  reducerPath: "jsonServerApi",
+  baseQuery: fetchBaseQuery({ baseUrl: "http://localhost:8000/" }),
+  tagTypes: ["Albums"],
   endpoints: (builder) => ({
     getAlbums: builder.query({
       query: (page = 1) => `albums?_page=${page}&_limit=10`,
-      providesTags: ['Albums'],
+      providesTags: (result) =>
+        result
+          ? [
+              ...result.map(({ id }) => ({ type: "Albums", id })),
+              { type: "Albums", id: "LIST" },
+            ]
+          : [{ type: "Albums", id: "LIST" }],
     }),
 
     createAlbum: builder.mutation({
       query: (title) => ({
-        url: 'albums',
-        method: 'POST',
+        url: "albums",
+        method: "POST",
         body: { title },
       }),
-      invalidatesTags: ['Albums'],
+      invalidatesTags: (result, _error, _arg) => [
+        { type: "Albums", id: result.id },
+        { type: "Albums", id: "LIST" },
+      ],
     }),
 
     updateAlbum: builder.mutation({
       query: ({ id, title }) => ({
         url: `albums/${id}`,
-        method: 'PUT',
+        method: "PUT",
         body: { title },
       }),
-      invalidatesTags: ['Albums'],
+      invalidatesTags: (result, error, arg) => [{ type: "Albums", id: arg.id }],
     }),
 
     deleteAlbum: builder.mutation({
       query: (id) => ({
         url: `albums/${id}`,
-        method: 'DELETE',
+        method: "DELETE",
       }),
-      invalidatesTags: ['Albums'],
+      invalidatesTags: ["Albums"],
     }),
   }),
 });
